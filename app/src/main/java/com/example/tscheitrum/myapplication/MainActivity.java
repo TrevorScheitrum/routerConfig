@@ -5,12 +5,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.*;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,6 +61,9 @@ public class MainActivity extends AppCompatActivity {
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show();
 
+        new loadData().execute(mWebView);
+
+
 
     }
     public String intToIpAddress(int ipAddress) {
@@ -86,4 +96,35 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+
+}
+
+
+public class loadData extends AsyncTask<WebView> {
+    @Override
+    protected Object doInBackground(Object[] params) {
+        String data = "";
+        Document doc = null;
+        try {
+            doc = Jsoup.connect("http://stackoverflow.com/questions/10695350/androi-and-jsoup").get();
+            Elements elements = doc.getElementsByClass("post-tag");
+            for(Element element : elements) {
+                data += element.outerHtml();
+                data += "<br/>";
+            }
+            webView.loadData(data, "text/html", "UTF-8");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    protected void onProgressUpdate(Integer... progress) {
+    }
+
+    protected void onPostExecute(Long result) {
+    }
 }
