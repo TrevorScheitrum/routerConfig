@@ -6,24 +6,32 @@ import android.content.DialogInterface;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.*;
+import android.widget.Button;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.Console;
 import java.io.IOException;
 import java.net.URL;
+import java.util.logging.ConsoleHandler;
 
 public class MainActivity extends AppCompatActivity {
 
-    private WebView mWebView;
+    public WebView mWebView;
     public DhcpInfo d;
     public WifiManager wifii;
+    private Button button;
+    private AlertDialog alert;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mWebView = (WebView) findViewById(R.id.activity_main_webview);
+        mWebView.setWebViewClient(new WebViewClient());
         // Enable Javascript
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -41,11 +50,10 @@ public class MainActivity extends AppCompatActivity {
         d = wifii.getDhcpInfo();
         int gatewayip = d.gateway;
 
-        mWebView.loadUrl("http://" + String.valueOf(intToIpAddress(wifii.getDhcpInfo().gateway)));
-        // Force links and redirects to open in the WebView instead of in a browser
-        mWebView.setWebViewClient(new WebViewClient());
+        //mWebView.loadUrl("http://" + String.valueOf(intToIpAddress(wifii.getDhcpInfo().gateway)));
+        mWebView.loadUrl("http://stackoverflow.com");
 
-        new AlertDialog.Builder(this)
+        final AlertDialog.Builder alert = new AlertDialog.Builder(this)
                 .setTitle("DHCP INFO")
                 .setMessage(String.valueOf(intToIpAddress(wifii.getDhcpInfo().gateway)))
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -58,10 +66,46 @@ public class MainActivity extends AppCompatActivity {
                         // do nothing
                     }
                 })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
+                        .setIcon(android.R.drawable.ic_dialog_alert);
+        //alert.show();
 
-        new loadData().execute(mWebView);
+        //new loadData().execute(mWebView);
+        button = (Button) findViewById(R.id.btn_do_it);
+        alert.setMessage("button Clicked!");
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                alert.show();
+
+                int SDK_INT = android.os.Build.VERSION.SDK_INT;
+                if (SDK_INT > 8) {
+                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                            .permitAll().build();
+                    StrictMode.setThreadPolicy(policy);
+                    Document doc = null;
+                    String data = "";
+                    try {
+                        doc = Jsoup.connect("http://stackoverflow.com/questions/10695350/androi-and-jsoup").get();
+                        Elements elements = doc.getElementsByClass("post-tag");
+                        for (Element element : elements) {
+                            data += element.outerHtml();
+                            data += "<br/>";
+                        }
+
+                        mWebView.loadData(data, "text/html", "UTF-8");
+
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+            }
+        });
+
 
 
 
@@ -100,31 +144,17 @@ public class MainActivity extends AppCompatActivity {
 
 }
 
-
-public class loadData extends AsyncTask<WebView> {
+class WebClient extends WebViewClient {
     @Override
-    protected Object doInBackground(Object[] params) {
-        String data = "";
-        Document doc = null;
-        try {
-            doc = Jsoup.connect("http://stackoverflow.com/questions/10695350/androi-and-jsoup").get();
-            Elements elements = doc.getElementsByClass("post-tag");
-            for(Element element : elements) {
-                data += element.outerHtml();
-                data += "<br/>";
-            }
-            webView.loadData(data, "text/html", "UTF-8");
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+    public boolean shouldOverrideUrlLoading(WebView view, String url) {
+        view.loadUrl(url);
+        return true;
     }
 
-    protected void onProgressUpdate(Integer... progress) {
-    }
-
-    protected void onPostExecute(Long result) {
+    @Override
+    public void onPageFinished(WebView view, String url)
+    {
+        // Obvious next step is: document.forms[0].submit()
+        view.loadUrl("javascript:alert('hey');");
     }
 }

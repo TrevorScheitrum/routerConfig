@@ -10,4 +10,13 @@
         android:id="@+id/activity_main_webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <Button
+        android:id="@+id/btn_do_it"
+        android:layout_width="200dip"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_marginTop="15dip"
+        android:layout_marginLeft="260dip"
+        android:text="Run Async task" />
 </RelativeLayout>
