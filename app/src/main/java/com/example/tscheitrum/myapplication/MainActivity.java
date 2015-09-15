@@ -14,6 +14,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.webkit.*;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -31,7 +33,11 @@ public class MainActivity extends AppCompatActivity {
     public DhcpInfo d;
     public WifiManager wifii;
     private Button button;
+    private Button btn_login;
     private AlertDialog alert;
+    private EditText txt_username;
+    private EditText txt_password;
+    private CheckBox ckbx_auto_login;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,15 +49,17 @@ public class MainActivity extends AppCompatActivity {
         // Enable Javascript
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        mWebView.getSettings().setBuiltInZoomControls(true);
+        mWebView.getSettings().setDisplayZoomControls(false);
 
         DhcpInfo d;
-        WifiManager wifii;
+        final WifiManager wifii;
         wifii= (WifiManager) getSystemService(Context.WIFI_SERVICE);
         d = wifii.getDhcpInfo();
         int gatewayip = d.gateway;
 
         //mWebView.loadUrl("http://" + String.valueOf(intToIpAddress(wifii.getDhcpInfo().gateway)));
-        mWebView.loadUrl("http://stackoverflow.com");
+        //mWebView.loadUrl("http://stackoverflow.com");
 
         final AlertDialog.Builder alert = new AlertDialog.Builder(this)
                 .setTitle("DHCP INFO")
@@ -67,11 +75,35 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                         .setIcon(android.R.drawable.ic_dialog_alert);
-        //alert.show();
+        alert.show();
 
         //new loadData().execute(mWebView);
         button = (Button) findViewById(R.id.btn_do_it);
+        btn_login = (Button) findViewById(R.id.btn_login);
+        txt_username = (EditText) findViewById(R.id.editText);
+        txt_password = (EditText) findViewById(R.id.editText2);
+        ckbx_auto_login = (CheckBox) findViewById(R.id.ckbx_auto_login);
+
+        final String url = String.valueOf(intToIpAddress(wifii.getDhcpInfo().gateway));
         alert.setMessage("button Clicked!");
+
+        btn_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String username = "";
+                String password = "";
+                if (ckbx_auto_login.isChecked()) {
+                    username = "admin";
+                    password = "password";
+                }else{
+                    username = txt_username.getEditableText().toString();
+                    password = txt_password.getText().toString();
+                }
+                mWebView.loadUrl("http://" + username + ":" + password + "@" + url);
+            }
+        });
+
+
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
