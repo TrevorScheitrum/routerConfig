@@ -25,6 +25,7 @@ import org.jsoup.select.Elements;
 import java.io.Console;
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.ConsoleHandler;
 
 public class MainActivity extends AppCompatActivity {
@@ -99,7 +100,21 @@ public class MainActivity extends AppCompatActivity {
                     username = txt_username.getEditableText().toString();
                     password = txt_password.getText().toString();
                 }
-                mWebView.loadUrl("http://" + username + ":" + password + "@" + url);
+                String webpage = "http://" + username + ":" + password + "@" + url;
+                mWebView.loadUrl(webpage);
+                String test = "test";
+                try {
+                    test = new RetrieveFeedTask().execute(webpage).get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+
+                alert.setMessage(test);
+                alert.show();
+                mWebView.loadUrl(test);
+
             }
         });
 
@@ -188,5 +203,36 @@ class WebClient extends WebViewClient {
     {
         // Obvious next step is: document.forms[0].submit()
         view.loadUrl("javascript:alert('hey');");
+    }
+}
+
+class RetrieveFeedTask extends AsyncTask<String, Void, String> {
+
+    private Exception exception;
+
+    protected String doInBackground(String... webpage) {
+        Document doc = null;
+        String data = "";
+        try {
+            doc = Jsoup.connect(webpage[0]).get();
+            Elements elements = doc.select("a");
+            for (Element element : elements) {
+                if (element.attr("href").contains("Wireless")){
+                    return element.attr("href");
+                }
+            }
+
+            //mWebView.loadData(data, "text/html", "UTF-8");
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "failed.";
+    }
+
+    protected void onPostExecute(String feed) {
+        // TODO: check this.exception
+        // TODO: do something with the feed
     }
 }
