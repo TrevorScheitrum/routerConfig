@@ -17,6 +17,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.HttpResponse;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,7 +29,10 @@ import org.jsoup.select.Elements;
 
 import java.io.Console;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.ConsoleHandler;
 
@@ -55,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
         DhcpInfo d;
         final WifiManager wifii;
-        wifii= (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        wifii = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         d = wifii.getDhcpInfo();
         int gatewayip = d.gateway;
 
@@ -75,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
                         // do nothing
                     }
                 })
-                        .setIcon(android.R.drawable.ic_dialog_alert);
+                .setIcon(android.R.drawable.ic_dialog_alert);
         alert.show();
 
         //new loadData().execute(mWebView);
@@ -91,18 +99,34 @@ public class MainActivity extends AppCompatActivity {
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+
                 String username = "";
                 String password = "";
-                if (ckbx_auto_login.isChecked()) {
-                    username = "admin";
-                    password = "password";
-                }else{
+
+                String[] credentials = {"admin","admin", "admin", "password", "username", "admin", "username", "password","root2","115wolympicpl"};
+
+                String webpage = "http://" + username + ":" + password + "@" + url;
+
+
+                String test = "test";
+
+
+                if (!ckbx_auto_login.isChecked()) {
                     username = txt_username.getEditableText().toString();
                     password = txt_password.getText().toString();
+                    webpage = "http://" + username + ":" + password + "@" + url;
+                    tryLogin(webpage);
+                }else{
+                    for(int i=0;i<credentials.length;i=i+2){
+                        username = credentials[i];
+                        password = credentials[i+1];
+                        webpage = "http://" + username + ":" + password + "@" + url;
+                        if (tryLogin(webpage)){
+                            break;
+                        }
+                    }
                 }
-                String webpage = "http://" + username + ":" + password + "@" + url;
-                mWebView.loadUrl(webpage);
-                String test = "test";
                 try {
                     test = new RetrieveFeedTask().execute(webpage).get();
                 } catch (InterruptedException e) {
@@ -117,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
 
 
         button.setOnClickListener(new View.OnClickListener() {
@@ -152,9 +175,31 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
 
 
+    public boolean tryLogin(String url){
+            // TODO Auto-generated method stub
+            int iHTTPStatus;
 
+            // Making HTTP request
+            try {
+                // defaultHttpClient
+                DefaultHttpClient httpClient = new DefaultHttpClient();
+                HttpGet httpRequest = new HttpGet(url);
+
+                HttpResponse httpResponse = httpClient.execute(httpRequest);
+                iHTTPStatus = httpResponse.getStatusLine().getStatusCode();
+                if (iHTTPStatus != 200) {
+                    // Serve a local page instead...
+                    return false;
+                } else {
+
+                    mWebView.loadUrl(url);     // Status = 200 so we can loard our desired URL
+                }
+            }catch(Exception e) {}
+
+        return true;
 
     }
     public String intToIpAddress(int ipAddress) {
